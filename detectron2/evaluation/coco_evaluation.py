@@ -98,6 +98,8 @@ class COCOEvaluator(DatasetEvaluator):
         self._distributed = distributed
         self._output_dir = output_dir
 
+        self._logger.info(f"Using Custom Version of COCOEvaluator!")
+
         if use_fast_impl and (COCOeval_opt is COCOeval):
             self._logger.info("Fast COCO eval is not built. Falling back to official COCO eval.")
             use_fast_impl = False
