@@ -588,7 +588,8 @@ def _evaluate_predictions_on_coco(
             c.pop("bbox", None)
 
     coco_dt = coco_gt.loadRes(coco_results)
-    coco_eval = (COCOeval_opt if use_fast_impl else COCOeval)(coco_gt, coco_dt, iou_type)
+    # coco_eval = (COCOeval_opt if use_fast_impl else COCOeval)(coco_gt, coco_dt, iou_type)
+    coco_eval = COCOevalMaxDets(coco_gt, coco_dt, iou_type)
     # For COCO, the default max_dets_per_image is [1, 10, 100].
     if max_dets_per_image is None:
         max_dets_per_image = [1, 10, 100]  # Default from COCOEval
@@ -598,8 +599,9 @@ def _evaluate_predictions_on_coco(
         ), "COCOeval requires maxDets (and max_dets_per_image) to have length at least 3"
         # In the case that user supplies a custom input for max_dets_per_image,
         # apply COCOevalMaxDets to evaluate AP with the custom input.
-        if max_dets_per_image[2] != 100:
-            coco_eval = COCOevalMaxDets(coco_gt, coco_dt, iou_type)
+        # if max_dets_per_image[2] != 100:
+        #     coco_eval = COCOevalMaxDets(coco_gt, coco_dt, iou_type)
+        coco_eval = COCOevalMaxDets(coco_gt, coco_dt, iou_type)
     if iou_type != "keypoints":
         coco_eval.params.maxDets = max_dets_per_image
 
@@ -682,8 +684,8 @@ class COCOevalMaxDets(COCOeval):
             stats = np.zeros((12,))
             # Evaluate AP using the custom limit on maximum detections per image
             stats[0] = _summarize(1, maxDets=self.params.maxDets[2])
-            stats[1] = _summarize(1, iouThr=0.5, maxDets=self.params.maxDets[2])
-            stats[2] = _summarize(1, iouThr=0.75, maxDets=self.params.maxDets[2])
+            stats[1] = _summarize(1, iouThr=0.25, maxDets=self.params.maxDets[2])
+            stats[2] = _summarize(1, iouThr=0.50, maxDets=self.params.maxDets[2])
             stats[3] = _summarize(1, areaRng="small", maxDets=self.params.maxDets[2])
             stats[4] = _summarize(1, areaRng="medium", maxDets=self.params.maxDets[2])
             stats[5] = _summarize(1, areaRng="large", maxDets=self.params.maxDets[2])
@@ -698,13 +700,13 @@ class COCOevalMaxDets(COCOeval):
         def _summarizeKps():
             stats = np.zeros((10,))
             stats[0] = _summarize(1, maxDets=20)
-            stats[1] = _summarize(1, maxDets=20, iouThr=0.5)
-            stats[2] = _summarize(1, maxDets=20, iouThr=0.75)
+            stats[1] = _summarize(1, maxDets=20, iouThr=0.25)
+            stats[2] = _summarize(1, maxDets=20, iouThr=0.50)
             stats[3] = _summarize(1, maxDets=20, areaRng="medium")
             stats[4] = _summarize(1, maxDets=20, areaRng="large")
             stats[5] = _summarize(0, maxDets=20)
-            stats[6] = _summarize(0, maxDets=20, iouThr=0.5)
-            stats[7] = _summarize(0, maxDets=20, iouThr=0.75)
+            stats[6] = _summarize(0, maxDets=20, iouThr=0.25)
+            stats[7] = _summarize(0, maxDets=20, iouThr=0.50)
             stats[8] = _summarize(0, maxDets=20, areaRng="medium")
             stats[9] = _summarize(0, maxDets=20, areaRng="large")
             return stats
