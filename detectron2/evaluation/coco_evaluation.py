@@ -30,6 +30,7 @@ try:
 except ImportError:
     COCOeval_opt = COCOeval
 
+MAX_DETS = 500
 
 class COCOEvaluator(DatasetEvaluator):
     """
@@ -111,7 +112,8 @@ class COCOEvaluator(DatasetEvaluator):
         # evaluating AP. COCOEvaluator expects an integer for max_dets_per_image, so for COCOeval,
         # we reformat max_dets_per_image into [1, 10, max_dets_per_image], based on the defaults.
         if max_dets_per_image is None:
-            max_dets_per_image = [1, 10, 100]
+            # max_dets_per_image = [1, 10, 100]
+            max_dets_per_image = [1, 10, MAX_DETS]
         else:
             max_dets_per_image = [1, 10, max_dets_per_image]
         self._max_dets_per_image = max_dets_per_image
@@ -337,9 +339,12 @@ class COCOEvaluator(DatasetEvaluator):
         """
 
         metrics = {
-            "bbox": ["AP", "AP50", "AP75", "APs", "APm", "APl"],
-            "segm": ["AP", "AP50", "AP75", "APs", "APm", "APl"],
-            "keypoints": ["AP", "AP50", "AP75", "APm", "APl"],
+            # "bbox": ["AP", "AP50", "AP75", "APs", "APm", "APl"],
+            # "segm": ["AP", "AP50", "AP75", "APs", "APm", "APl"],
+            # "keypoints": ["AP", "AP50", "AP75", "APm", "APl"],
+            "bbox": ["AP", "AP25", "AP50", "APs", "APm", "APl"],
+            "segm": ["AP", "AP25", "AP50", "APs", "APm", "APl"],
+            "keypoints": ["AP", "AP25", "AP50", "APm", "APl"],
         }[iou_type]
 
         if coco_eval is None:
@@ -594,7 +599,8 @@ def _evaluate_predictions_on_coco(
     coco_eval = COCOevalMaxDets(coco_gt, coco_dt, iou_type)
     # For COCO, the default max_dets_per_image is [1, 10, 100].
     if max_dets_per_image is None:
-        max_dets_per_image = [1, 10, 100]  # Default from COCOEval
+        # max_dets_per_image = [1, 10, 100]  # Default from COCOEval
+        max_dets_per_image = [1, 10, MAX_DETS]  # Default from COCOEval
     else:
         assert (
             len(max_dets_per_image) >= 3
@@ -1060,7 +1066,8 @@ class COCOeval:
         Compute and display summary metrics for evaluation results.
         Note this functin can *only* be applied on the default parameter setting
         '''
-        def _summarize( ap=1, iouThr=None, areaRng='all', maxDets=100 ):
+        # def _summarize( ap=1, iouThr=None, areaRng='all', maxDets=100):
+        def _summarize( ap=1, iouThr=None, areaRng='all', maxDets=MAX_DETS):
             p = self.params
             iStr = ' {:<18} {} @[ IoU={:<9} | area={:>6s} | maxDets={:>3d} ] = {:0.3f}'
             titleStr = 'Average Precision' if ap == 1 else 'Average Recall'
@@ -1139,9 +1146,10 @@ class Params:
         self.imgIds = []
         self.catIds = []
         # np.arange causes trouble.  the data point on arange is slightly larger than the true value
-        self.iouThrs = np.linspace(.25, 0.95, int(np.round((0.95 - .25) / .05)) + 1, endpoint=True)
+        self.iouThrs = np.linspace(.25, 0.75, int(np.round((0.75 - .25) / .05)) + 1, endpoint=True)
         self.recThrs = np.linspace(.0, 1.00, int(np.round((1.00 - .0) / .01)) + 1, endpoint=True)
-        self.maxDets = [1, 10, 100]
+        # self.maxDets = [1, 10, 100]
+        self.maxDets = [1, 10, MAX_DETS]
         self.areaRng = [[0 ** 2, 1e5 ** 2], [0 ** 2, 32 ** 2], [32 ** 2, 96 ** 2], [96 ** 2, 1e5 ** 2]]
         self.areaRngLbl = ['all', 'small', 'medium', 'large']
         self.useCats = 1
@@ -1150,7 +1158,7 @@ class Params:
         self.imgIds = []
         self.catIds = []
         # np.arange causes trouble.  the data point on arange is slightly larger than the true value
-        self.iouThrs = np.linspace(.25, 0.95, int(np.round((0.95 - .25) / .05)) + 1, endpoint=True)
+        self.iouThrs = np.linspace(.25, 0.75, int(np.round((0.75 - .25) / .05)) + 1, endpoint=True)
         self.recThrs = np.linspace(.0, 1.00, int(np.round((1.00 - .0) / .01)) + 1, endpoint=True)
         self.maxDets = [20]
         self.areaRng = [[0 ** 2, 1e5 ** 2], [32 ** 2, 96 ** 2], [96 ** 2, 1e5 ** 2]]
@@ -1182,7 +1190,8 @@ class COCOevalMaxDets(COCOeval):
         a custom value for  max_dets_per_image
         """
 
-        def _summarize(ap=1, iouThr=None, areaRng="all", maxDets=100):
+        # def _summarize(ap=1, iouThr=None, areaRng="all", maxDets=100):
+        def _summarize(ap=1, iouThr=None, areaRng="all", maxDets=MAX_DETS):
             p = self.params
             iStr = " {:<18} {} @[ IoU={:<9} | area={:>6s} | maxDets={:>3d} ] = {:0.3f}"
             titleStr = "Average Precision" if ap == 1 else "Average Recall"
